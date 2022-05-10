@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 from bot_sivim._secrets import get_secret
+from bot_sivim._fiber import get_fiber_data
 import logging
 
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram import Update
 from telegram.ext import (
     Updater,
     CommandHandler,
@@ -60,6 +61,11 @@ def house_num(update: Update, context: CallbackContext) -> int:
     street = context.user_data['street']
 
     logger.info(f'Address of {user.first_name}: {city}, {street}, {house_num}')
+    update.message.reply_text('Fetching fiber data...')
+    data = get_fiber_data(city, street, house_num)
+    text = '\n'.join(f'{company}: {available}' for company, available in data)
+    text = f'{city}, {street}, {house_num}\n\n{text}\n'
+    update.message.reply_text(text)
 
     return ConversationHandler.END
 
