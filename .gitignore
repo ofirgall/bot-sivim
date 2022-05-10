@@ -1,2 +1,4 @@
 secrets.json
 *.pyc
+build/
+*.egg-info
