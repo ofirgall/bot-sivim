@@ -40,7 +40,18 @@ def partner(city: str, street: str, house_num: int) -> bool:
 
 @fiber_company
 def cellcom(city: str, street: str, house_num: int) -> bool:
-    return True
+    city_id, street_id = bezeq_cellcom_get_city_and_street_id(city, street)
+
+    resp = requests.get(f'https://digital-api.cellcom.co.il/api/Fiber/GetFiberAddressStatus/{city_id}/{street_id}/{house_num}/1')
+
+    resp.raise_for_status()
+    content = json.loads(resp.content)
+
+    for entry in content['Body']['dataInfoList']:
+        if entry['tashtitType'] is not None:
+            return True
+
+    return False
 
 
 def bezeq_cellcom_get_city_and_street_id(city: str, street: str) -> Tuple[int, int]:
