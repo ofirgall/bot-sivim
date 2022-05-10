@@ -12,7 +12,8 @@ setuptools.setup(
     author='Ofir Gal',
     author_email='',
     packages=setuptools.find_packages(),
-    install_requires=['python-telegram-bot>=13.11'],
+    install_requires=['python-telegram-bot>=13.11',
+                    'requests>=2.24.0'],
     classifiers=[
     ],
     python_requires='>=3.8',
