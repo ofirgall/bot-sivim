@@ -41,8 +41,9 @@ def bezeq(city: str, street: str, house_num: int) -> bool:
 
     return content['Status'] == 1
 
-@fiber_company
+# @fiber_company
 def partner(city: str, street: str, house_num: int) -> bool:
+    """ partner are using google captcha for their API access :( """
     return False
 
 @fiber_company
