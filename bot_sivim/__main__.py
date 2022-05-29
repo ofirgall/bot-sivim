@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from argparse import ArgumentParser
 from bot_sivim._secrets import get_secret
 from bot_sivim._fiber import get_fiber_data
 import logging
@@ -75,7 +76,14 @@ def cancel(update: Update, context: CallbackContext) -> int:
 
 
 def main() -> None:
-    """Run the bot."""
+    parser = ArgumentParser()
+    parser.add_argument('-v', '--verbose', action='store_true')
+
+    args = parser.parse_args()
+
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+
     updater = Updater(get_secret('telegram'))
 
     dispatcher = updater.dispatcher
