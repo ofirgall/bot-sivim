@@ -82,6 +82,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.verbose:
+        logging.info('Setting logging level to DEBUG')
         logger.setLevel(logging.DEBUG)
 
     updater = Updater(get_secret('telegram'))

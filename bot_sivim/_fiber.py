@@ -4,6 +4,9 @@ import json
 import requests
 import logging
 from typing import Callable, List, Tuple
+from requests.adapters import HTTPAdapter, Retry
+
+HTTP_ADAPTER = HTTPAdapter(max_retries=Retry(total=5, backoff_factor=0.1))
 
 COMPANIES = []
 
@@ -20,7 +23,7 @@ def fiber_company(func: Callable[[str, str, int], bool]):
 @fiber_company
 def bezeq(city: str, street: str, house_num: int) -> bool:
     logging.info('getting city and street id')
-    city_id, street_id = bezeq_cellcom_get_city_and_street_id(city, street)
+    city_id, street_id, session = bezeq_cellcom_get_city_and_street_id(city, street)
     logging.info(f'city_id: {city_id} street_id: {street_id}')
 
     payload = {
@@ -31,7 +34,7 @@ def bezeq(city: str, street: str, house_num: int) -> bool:
         "City": city,
         "Entrance":""
     }
-    resp = requests.post('https://www.bezeq.co.il/umbraco/api/FormWebApi/CheckAddress', data=payload)
+    resp = session.post('http://www.bezeq.co.il/umbraco/api/FormWebApi/CheckAddress', data=payload)
     resp.raise_for_status()
     content = json.loads(resp.content)
     logging.debug(content)
@@ -45,7 +48,7 @@ def partner(city: str, street: str, house_num: int) -> bool:
 @fiber_company
 def cellcom(city: str, street: str, house_num: int) -> bool:
     logging.info('getting city and street id')
-    city_id, street_id = bezeq_cellcom_get_city_and_street_id(city, street)
+    city_id, street_id, _ = bezeq_cellcom_get_city_and_street_id(city, street)
     logging.info(f'city_id: {city_id} street_id: {street_id}')
 
     resp = requests.get(f'https://digital-api.cellcom.co.il/api/Fiber/GetFiberAddressStatus/{city_id}/{street_id}/{house_num}/1')
@@ -61,9 +64,12 @@ def cellcom(city: str, street: str, house_num: int) -> bool:
     return False
 
 
-def bezeq_cellcom_get_city_and_street_id(city: str, street: str) -> Tuple[int, int]:
+def bezeq_cellcom_get_city_and_street_id(city: str, street: str) -> Tuple[int, int, requests.Session]:
+    session = requests.Session()
+    session.mount('http://www.bezeq.co.il', HTTP_ADAPTER)
+
     logging.info('Getting city id')
-    resp = requests.get(f'https://www.bezeq.co.il/umbraco/api/FormWebApi/GetAutoCompleteAddressValue?SearchText={city}&SearchType=0&City=')
+    resp = session.get(f'http://www.bezeq.co.il/umbraco/api/FormWebApi/GetAutoCompleteAddressValue?SearchText={city}&SearchType=0&City=')
     resp.raise_for_status()
 
     content = json.loads(resp.content)
@@ -71,11 +77,11 @@ def bezeq_cellcom_get_city_and_street_id(city: str, street: str) -> Tuple[int, i
     city_id = int(content[0]['id'])
 
     logging.info(f'Getting street id, city_id: {city_id}')
-    resp = requests.get(f'https://www.bezeq.co.il/umbraco/api/FormWebApi/GetAutoCompleteAddressValue?SearchText={street}&SearchType=1&City={city_id}')
+    resp = session.get(f'http://www.bezeq.co.il/umbraco/api/FormWebApi/GetAutoCompleteAddressValue?SearchText={street}&SearchType=1&City={city_id}')
     resp.raise_for_status()
 
     content = json.loads(resp.content)
     logging.debug(content)
     street_id = int(content[0]['id'])
 
-    return city_id, street_id
+    return city_id, street_id, session
