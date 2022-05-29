@@ -2,6 +2,7 @@
 
 import json
 import requests
+import logging
 from typing import Callable, List, Tuple
 
 COMPANIES = []
@@ -18,7 +19,9 @@ def fiber_company(func: Callable[[str, str, int], bool]):
 
 @fiber_company
 def bezeq(city: str, street: str, house_num: int) -> bool:
+    logging.info('getting city and street id')
     city_id, street_id = bezeq_cellcom_get_city_and_street_id(city, street)
+    logging.info(f'city_id: {city_id} street_id: {street_id}')
 
     payload = {
         "CityId": str(city_id),
@@ -31,6 +34,7 @@ def bezeq(city: str, street: str, house_num: int) -> bool:
     resp = requests.post('https://www.bezeq.co.il/umbraco/api/FormWebApi/CheckAddress', data=payload)
     resp.raise_for_status()
     content = json.loads(resp.content)
+    logging.debug(content)
 
     return content['Status'] == 1
 
@@ -40,12 +44,15 @@ def partner(city: str, street: str, house_num: int) -> bool:
 
 @fiber_company
 def cellcom(city: str, street: str, house_num: int) -> bool:
+    logging.info('getting city and street id')
     city_id, street_id = bezeq_cellcom_get_city_and_street_id(city, street)
+    logging.info(f'city_id: {city_id} street_id: {street_id}')
 
     resp = requests.get(f'https://digital-api.cellcom.co.il/api/Fiber/GetFiberAddressStatus/{city_id}/{street_id}/{house_num}/1')
 
     resp.raise_for_status()
     content = json.loads(resp.content)
+    logging.debug(content)
 
     for entry in content['Body']['dataInfoList']:
         if entry['tashtitType'] is not None:
@@ -55,16 +62,20 @@ def cellcom(city: str, street: str, house_num: int) -> bool:
 
 
 def bezeq_cellcom_get_city_and_street_id(city: str, street: str) -> Tuple[int, int]:
+    logging.info('Getting city id')
     resp = requests.get(f'https://www.bezeq.co.il/umbraco/api/FormWebApi/GetAutoCompleteAddressValue?SearchText={city}&SearchType=0&City=')
     resp.raise_for_status()
 
     content = json.loads(resp.content)
+    logging.debug(content)
     city_id = int(content[0]['id'])
 
+    logging.info(f'Getting street id, city_id: {city_id}')
     resp = requests.get(f'https://www.bezeq.co.il/umbraco/api/FormWebApi/GetAutoCompleteAddressValue?SearchText={street}&SearchType=1&City={city_id}')
     resp.raise_for_status()
 
     content = json.loads(resp.content)
+    logging.debug(content)
     street_id = int(content[0]['id'])
 
     return city_id, street_id

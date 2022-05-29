@@ -2,7 +2,7 @@
 Telegram bot to check for optical fiber availability in Israel
 
 ## Run
-```python3 -m dirabot```
+```python3 -m bot-sivim```
 
 ## Installation
 ```pip install -r requirements.txt```
