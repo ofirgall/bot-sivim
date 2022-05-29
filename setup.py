@@ -16,5 +16,5 @@ setuptools.setup(
                     'requests>=2.24.0'],
     classifiers=[
     ],
-    python_requires='>=3.8',
+    python_requires='>=3.7',
 )
